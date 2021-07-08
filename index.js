@@ -18,12 +18,21 @@ const typeDefs = gql`
   type Query {
     libraries: [Library]
   }
+
+  type Mutation {
+    addAuthor(name: String): Author
+  }
 `
 
 const resolvers = {
   Query: {
     libraries: () => {
       return [{ name: 'Libreria nacional' }]
+    },
+  },
+  Mutation: {
+    addAuthor: (_, { name }, ctx) => {
+      return { name: name }
     },
   },
   Library: {
@@ -38,7 +47,14 @@ const resolvers = {
   },
 }
 
-const server = new ApolloServer({ typeDefs, resolvers })
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: () => {
+    // Context
+    return { token: true, model: [] }
+  },
+})
 
 server.listen().then(({ url }) => {
   console.log(`🚀  Server ready at ${url}`)
