@@ -1,8 +1,24 @@
-const { ApolloServer, gql } = require('apollo-server')
+const { ApolloServer, gql, SchemaDirectiveVisitor } = require('apollo-server')
+const { defaultFieldResolver } = require('graphql')
+
+class UpperCaseDirective extends SchemaDirectiveVisitor {
+  visitFieldDefinition(field) {
+    const { resolve = defaultFieldResolver } = field
+    field.resolve = async function (...args) {
+      const result = await resolve.apply(this, args)
+      if (typeof result === 'string') {
+        return result.toUpperCase()
+      }
+      return result
+    }
+  }
+}
 
 const typeDefs = gql`
+  directive @upper on FIELD_DEFINITION
+
   type Library {
-    name: String!
+    name: String! @upper
     books: [Book]!
   }
 
@@ -53,6 +69,9 @@ const server = new ApolloServer({
   context: () => {
     // Context
     return { token: true, model: [] }
+  },
+  schemaDirectives: {
+    upper: UpperCaseDirective,
   },
 })
 
