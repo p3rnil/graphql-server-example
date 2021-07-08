@@ -1,14 +1,10 @@
 const { ApolloServer, gql } = require('apollo-server')
 
 const typeDefs = gql`
-  type Library {
-    name: String!
-    books: [Book]!
-  }
+  union Result = Book | Author
 
   type Book {
     title: String
-    author: Author
   }
 
   type Author {
@@ -16,33 +12,25 @@ const typeDefs = gql`
   }
 
   type Query {
-    libraries: [Library]
-  }
-
-  type Mutation {
-    addAuthor(name: String): Author
+    search(contains: String): [Result]
   }
 `
 
 const resolvers = {
   Query: {
-    libraries: () => {
-      return [{ name: 'Libreria nacional' }]
+    search: () => {
+      return [{ name: 'Nico' }, { title: 'Juego de tronos' }]
     },
   },
-  Mutation: {
-    addAuthor: (_, { name }, ctx) => {
-      return { name: name }
-    },
-  },
-  Library: {
-    books: () => {
-      return [{ title: 'Harry Potter' }]
-    },
-  },
-  Book: {
-    author: () => {
-      return { name: 'J. K. Rowling' }
+  Result: {
+    __resolveType(obj, ctx) {
+      if (obj.name) {
+        return 'Author'
+      }
+      if (obj.title) {
+        return 'Book'
+      }
+      return null // throw error
     },
   },
 }
