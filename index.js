@@ -1,34 +1,60 @@
 const { ApolloServer, gql } = require('apollo-server')
 
 const typeDefs = gql`
-  union Result = Book | Author
-
-  type Book {
+  interface Book {
     title: String
+    author: String
   }
 
-  type Author {
+  type Textbook implements Book {
+    title: String
+    author: String
+    courses: [Course]
+  }
+
+  type ColoringBook implements Book {
+    title: String
+    author: String
+    colors: [Color]
+  }
+
+  type Color {
+    name: String
+  }
+
+  type Course {
     name: String
   }
 
   type Query {
-    search(contains: String): [Result]
+    schoolBooks: [Book]
   }
 `
 
 const resolvers = {
   Query: {
-    search: () => {
-      return [{ name: 'Nico' }, { title: 'Juego de tronos' }]
+    schoolBooks: () => {
+      return [
+        {
+          title: 'Primero',
+          author: 'Paco',
+          courses: [{ name: 'PRO56' }, { name: 'ADA' }],
+        },
+        {
+          title: 'Segundo',
+          author: 'Maria',
+          colors: [{ name: 'rojo' }, { name: 'verde' }],
+        },
+      ]
     },
   },
-  Result: {
-    __resolveType(obj, ctx) {
-      if (obj.name) {
-        return 'Author'
+  Book: {
+    __resolveType(book, ctx) {
+      if (book.courses) {
+        return 'Textbook'
       }
-      if (obj.title) {
-        return 'Book'
+      if (book.colors) {
+        return 'ColoringBook'
       }
       return null // throw error
     },
